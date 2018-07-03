@@ -1,0 +1,56 @@
+float varVolt = 1.95637657122904E-05;  // variance determined using excel and reading samples of raw sensor data
+float varProcess = 1e-9;// need to be checked by estimation;
+float Pc = 0.0;
+float G = 0.0;
+float T = 1.0;
+float Xp = 0.0;
+float Zp = 0.0;
+float Xe = 0.0;
+float tchrg=450.0;
+float millproc=0.0;
+float rshunt=3.2;
+
+void setup() {
+ //pinMode(A0,INPUT);  
+ pinMode(A1,INPUT);
+ pinMode(A2,INPUT);
+ Serial.begin(9600);
+}
+
+void loop() {
+  float Cv=analogRead(A2) ;
+  
+ while( ((Cv/1023.5)*5.0)> 2.7)
+ {
+ float p; 
+ p=analogRead(A1);
+ p=(p/1023.0)*5;
+Pc = T + varProcess;
+ G = Pc/(Pc + varVolt);    // kalman gain
+ T = (1-G)*Pc;
+ Xp = Xe;
+ Zp = Xp;
+ Xe = G*(p-Zp)+Xp;
+ Serial.print("Voltage accross battery: ");
+ Serial.println(Cv,3);
+ Serial.print("Filtered opamp output Voltage : ");
+ Serial.println(Xe*1.0,3);
+ float i= Xe/(102*rshunt) ;
+ //tchrg= tchrg+(i*
+ //Serial.print(" ");
+ Serial.print("Shunt Voltage : ");
+ Serial.println(Xe*1.0/102,3);
+
+ tchrg= tchrg+(i*(millis()-millproc))/3600.0 ;
+  //Serial.println(tchrg);
+ Serial.print("Charge out of the cell(mAh): ");
+ Serial.println(tchrg,3);
+ 
+ float soc= (800.0-tchrg)/8.0 ;
+ Serial.print("State of Charge:");
+ Serial.print(soc,2);
+ Serial.println("%");
+ Serial.print("\n");
+ delay(500);
+ }
+}
